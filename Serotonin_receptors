@@ -1,0 +1,71 @@
+import  numpy   as np
+from    scipy   import  signal
+import  scipy   as sp
+import matplotlib.pyplot as plt 
+
+class Receptors_5HT():
+
+    def __init__(self, Stm_init, Stm_duration, receptor1, tfn_switch_time):
+        self.R  =   receptor1
+        self.dt =   .1
+        self.t0 =   Stm_init
+        self.du =   Stm_duration
+        self.st =   tfn_switch_time
+        self.t  =   sp.arange(0,100, self.dt)
+
+
+
+    def _input(self):
+        inpt    =   np.zeros(self.du)
+        inpt[self.t0:(self.t0+2)] =   1.
+        return inpt
+
+        
+    def tf_5HTR1A(self):
+        T   =   np.size(self.t)
+        y   =   np.zeros(T)
+
+        y[0:self.st]=5*(np.exp(-self.t[0:self.st]/(1))-1)
+        y[self.st:T]= -np.exp(-self.t[self.st:T]/2.5)
+        y[self.st:T]= (y[self.st-1]/y[self.st])* y[self.st:T]
+
+        if (self.R  ==  '5_HT1A'):
+            return  y
+        else:
+            return  0
+
+
+    def tf_5HTR2A(self):
+        T   =   np.size(self.t)
+        y   =   np.zeros(T)
+        y[0:self.st]    =   (1-np.exp(-self.t[0:self.st]/5))
+        y[self.st:T]    =   np.exp(-self.t[self.st:T]/25)
+        y[0:self.st]    =   (y[self.st]/y[self.st-1]) * y[0:self.st]
+        
+        if (self.R  ==  '5_HT2A'):
+            return  y
+        else:
+            return  0
+
+
+
+x   =   Receptors_5HT(9,20,'5_HT2A',200)
+y   =   Receptors_5HT(9,20,'5_HT1A',900)
+
+I1  =  y._input()
+TF1 =   y.tf_5HTR1A()
+r1  =   np.convolve(I1,TF1) + 10
+
+I2  =   x._input()
+TF2 =   x.tf_5HTR2A()
+r2  =   np.convolve(I2,TF2) + 10
+
+fig1=plt.figure()
+plt.plot(np.arange(len(r1)),r1,'b',label='firing rate')
+plt.plot(np.arange(len(I1)),I1,'k',label='5-HT stimulation')
+
+fig2=plt.figure()
+plt.plot(np.arange(len(r1)),r2,'r',label='firing rate')
+plt.plot(np.arange(len(I1)),I2,'k',label='5-HT stimulation')
+
+plt.show()
